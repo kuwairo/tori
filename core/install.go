@@ -1,18 +1,29 @@
-package main
+package core
 
 import (
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
 )
 
-func download(url, path string) error {
+const defaultSource = "https://dl.google.com/go"
+
+func buildURL(source, version string) string {
+	goarch := runtime.GOARCH
+	if goarch == "arm" {
+		goarch = "armv6l"
+	}
+
+	goos := runtime.GOOS
+	return fmt.Sprintf("%s/go%s.%s-%s.tar.gz", source, version, goos, goarch)
+}
+
+func fetch(url, path string) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err
@@ -82,44 +93,4 @@ func extract(archive io.Reader, path string) error {
 	}
 
 	return nil
-}
-
-func main() {
-	version := "1.20.4"
-	goos, goarch := runtime.GOOS, runtime.GOARCH
-	url := fmt.Sprintf("https://go.dev/dl/go%s.%s-%s.tar.gz", version, goos, goarch)
-
-	tarball, err := os.CreateTemp("", "tori-")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("Downloading go%s.%s-%s...\n", version, goos, goarch)
-	if err := download(url, tarball.Name()); err != nil {
-		log.Fatal(err)
-	}
-
-	home, err := filepath.Abs(os.Getenv("TORI_HOME"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	target := filepath.Join(home, "versions", version)
-	if err := os.MkdirAll(target, 0755); err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("Extracting go%s.%s-%s...\n", version, goos, goarch)
-	if err := extract(tarball, target); err != nil {
-		log.Fatal(err)
-	}
-	os.Remove(tarball.Name())
-
-	symlink := filepath.Join(home, "bin")
-	if _, err := os.Lstat(symlink); err == nil {
-		if err := os.Remove(symlink); err != nil {
-			log.Fatal(err)
-		}
-	}
-	os.Symlink(filepath.Join(target, "go", "bin"), symlink)
 }

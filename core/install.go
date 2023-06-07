@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+
+	"github.com/google/uuid"
 )
 
 const defaultSource = "https://dl.google.com/go"
@@ -89,6 +91,66 @@ func extract(archive io.Reader, path string) error {
 				return err
 			}
 			file.Close()
+		}
+	}
+
+	return nil
+}
+
+func symlink(versionPath, linkPath string) error {
+	link := filepath.Join(linkPath, "bin")
+	tmpLink := link + uuid.New().String()
+
+	target := filepath.Join(versionPath, "go", "bin")
+	if err := os.Symlink(target, tmpLink); err != nil {
+		return err
+	}
+
+	if err := os.Rename(tmpLink, link); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Install(version string, makeDefault, verbose bool) error {
+	url := buildURL(defaultSource, version)
+	archive, err := os.CreateTemp("", "tori-")
+	if err != nil {
+		return err
+	}
+
+	if verbose {
+		fmt.Printf("Fetching %s...\n", version)
+	}
+	if err := fetch(url, archive.Name()); err != nil {
+		return err
+	}
+
+	home, err := filepath.Abs(os.Getenv("TORI_HOME"))
+	if err != nil {
+		return err
+	}
+	if home == "" {
+		home = filepath.Join(os.Getenv("HOME"), ".tori")
+	}
+
+	target := filepath.Join(home, "versions", version)
+	if err := os.Mkdir(target, 0755); err != nil {
+		return err
+	}
+
+	if verbose {
+		fmt.Printf("Extracting %s...\n", version)
+	}
+	if err := extract(archive, target); err != nil {
+		return err
+	}
+	os.Remove(archive.Name())
+
+	if makeDefault {
+		if err := symlink(target, home); err != nil {
+			return err
 		}
 	}
 

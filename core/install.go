@@ -9,8 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-
-	"github.com/google/uuid"
 )
 
 const defaultSource = "https://dl.google.com/go"
@@ -97,22 +95,6 @@ func extract(archive io.Reader, path string) error {
 	return nil
 }
 
-func symlink(version, path string) error {
-	link := filepath.Join(path, "bin")
-	tmpLink := link + uuid.New().String()
-
-	target := filepath.Join("versions", version, "go", "bin")
-	if err := os.Symlink(target, tmpLink); err != nil {
-		return err
-	}
-
-	if err := os.Rename(tmpLink, link); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func Install(version string, makeDefault, verbose bool) error {
 	url := buildURL(defaultSource, version)
 	archive, err := os.CreateTemp("", "tori-")
@@ -127,11 +109,7 @@ func Install(version string, makeDefault, verbose bool) error {
 		return err
 	}
 
-	home := os.Getenv("TORI_HOME")
-	if home == "" {
-		home = filepath.Join(os.Getenv("HOME"), ".tori")
-	}
-
+	home := getHome()
 	target := filepath.Join(home, "versions", version)
 	if err := os.MkdirAll(target, 0755); err != nil {
 		return err

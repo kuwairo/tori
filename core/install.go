@@ -97,11 +97,11 @@ func extract(archive io.Reader, path string) error {
 	return nil
 }
 
-func symlink(versionPath, linkPath string) error {
-	link := filepath.Join(linkPath, "bin")
+func symlink(version, path string) error {
+	link := filepath.Join(path, "bin")
 	tmpLink := link + uuid.New().String()
 
-	target := filepath.Join(versionPath, "go", "bin")
+	target := filepath.Join("versions", version, "go", "bin")
 	if err := os.Symlink(target, tmpLink); err != nil {
 		return err
 	}
@@ -127,16 +127,13 @@ func Install(version string, makeDefault, verbose bool) error {
 		return err
 	}
 
-	home, err := filepath.Abs(os.Getenv("TORI_HOME"))
-	if err != nil {
-		return err
-	}
+	home := os.Getenv("TORI_HOME")
 	if home == "" {
 		home = filepath.Join(os.Getenv("HOME"), ".tori")
 	}
 
 	target := filepath.Join(home, "versions", version)
-	if err := os.Mkdir(target, 0755); err != nil {
+	if err := os.MkdirAll(target, 0755); err != nil {
 		return err
 	}
 
@@ -149,7 +146,7 @@ func Install(version string, makeDefault, verbose bool) error {
 	os.Remove(archive.Name())
 
 	if makeDefault {
-		if err := symlink(target, home); err != nil {
+		if err := symlink(version, home); err != nil {
 			return err
 		}
 	}

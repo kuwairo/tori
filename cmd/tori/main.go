@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
+	"github.com/kuwairo/tori/core"
 	"github.com/urfave/cli/v2"
 )
 
@@ -59,6 +61,13 @@ func main() {
 }
 
 func handleInstall(cCtx *cli.Context) error {
+	version := cCtx.Args().First()
+	makeDefault := cCtx.Bool("use")
+
+	if err := core.Install(version, makeDefault, true); err != nil {
+		fmt.Printf("An error occurred during execution: %v\n", err)
+	}
+
 	return nil
 }
 

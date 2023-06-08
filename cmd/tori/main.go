@@ -80,5 +80,11 @@ func handleRemove(cCtx *cli.Context) error {
 }
 
 func handleUse(cCtx *cli.Context) error {
+	version := cCtx.Args().First()
+
+	if err := core.Use(version); err != nil {
+		fmt.Printf("An error occurred during execution: %v\n", err)
+	}
+
 	return nil
 }

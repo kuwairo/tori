@@ -75,7 +75,14 @@ func handleList(cCtx *cli.Context) error {
 	return nil
 }
 
+// TODO: consider accepting several versions
 func handleRemove(cCtx *cli.Context) error {
+	version := cCtx.Args().First()
+
+	if err := core.Remove(version); err != nil {
+		fmt.Printf("An error occurred during execution: %v\n", err)
+	}
+
 	return nil
 }
 

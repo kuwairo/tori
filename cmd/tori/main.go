@@ -72,6 +72,12 @@ func handleInstall(cCtx *cli.Context) error {
 }
 
 func handleList(cCtx *cli.Context) error {
+	online := cCtx.Bool("available")
+
+	if err := core.List(online); err != nil {
+		fmt.Printf("An error occurred during execution: %v\n", err)
+	}
+
 	return nil
 }
 

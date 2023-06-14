@@ -36,6 +36,7 @@ func fetch(url, path string) error {
 	}
 	defer res.Body.Close()
 
+	// TODO: add a descriptive error message for 404
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("bad status: %s", res.Status)
 	}

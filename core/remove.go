@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 )
 
+// TODO: add a descriptive error message for non-existent versions
 func Remove(version string) error {
 	home := getHome()
 	link := filepath.Join(home, "bin")

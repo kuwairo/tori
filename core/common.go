@@ -16,6 +16,7 @@ func getHome() string {
 	return home
 }
 
+// TODO: replace UUID with a simpler alternative
 func symlink(version, path string) error {
 	link := filepath.Join(path, "bin")
 	tmpLink := link + uuid.New().String()

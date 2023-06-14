@@ -11,8 +11,10 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:  "tori",
-		Usage: "manage the Go toolchain versions",
+		Name:                   "tori",
+		Usage:                  "manage the Go toolchain versions",
+		UseShortOptionHandling: true,
+
 		Commands: []*cli.Command{
 			{
 				Name:    "install",
@@ -36,6 +38,11 @@ func main() {
 						Name:    "available",
 						Aliases: []string{"a"},
 						Usage:   "list versions available for installation",
+					},
+					&cli.IntFlag{
+						Name:    "limit",
+						Aliases: []string{"l"},
+						Usage:   "limit the number of displayed versions to the specified value",
 					},
 				},
 				Action: handleList,
@@ -64,6 +71,7 @@ func handleInstall(cCtx *cli.Context) error {
 	version := cCtx.Args().First()
 	makeDefault := cCtx.Bool("use")
 
+	// TODO: consider adding '-v' flag
 	if err := core.Install(version, makeDefault, true); err != nil {
 		fmt.Printf("An error occurred during execution: %v\n", err)
 	}
@@ -73,15 +81,15 @@ func handleInstall(cCtx *cli.Context) error {
 
 func handleList(cCtx *cli.Context) error {
 	online := cCtx.Bool("available")
+	limit := cCtx.Int("limit")
 
-	if err := core.List(online); err != nil {
+	if err := core.List(online, limit); err != nil {
 		fmt.Printf("An error occurred during execution: %v\n", err)
 	}
 
 	return nil
 }
 
-// TODO: consider accepting several versions
 func handleRemove(cCtx *cli.Context) error {
 	version := cCtx.Args().First()
 

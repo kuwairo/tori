@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 )
 
+// TODO: add a descriptive error message for non-existent versions
 func Use(version string) error {
 	home := getHome()
 	target := filepath.Join(home, "versions", version, "go", "bin")

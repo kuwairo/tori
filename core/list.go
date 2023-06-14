@@ -2,14 +2,23 @@ package core
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 
 	"github.com/hashicorp/go-version"
 )
 
-func listOffline() ([]*version.Version, error) {
+const (
+	defaultRefs    = "https://go.googlesource.com/go/+refs"
+	tagExpression  = `tags/go\d+\.\d+(?:beta\d+|rc\d+|\.\d+)?`
+	minimumVersion = "1.11" // preliminary support for modules
+)
+
+func getVersionsOffline() ([]*version.Version, error) {
 	home := getHome()
 	target := filepath.Join(home, "versions")
 
@@ -27,23 +36,63 @@ func listOffline() ([]*version.Version, error) {
 		versions[i] = v
 	}
 
-	sort.Sort(version.Collection(versions))
+	sort.Sort(sort.Reverse(version.Collection(versions)))
 	return versions, nil
 }
 
-func List(online bool) error {
-	if !online {
-		versions, err := listOffline()
+func getVersionsOnline() ([]*version.Version, error) {
+	res, err := http.Get(defaultRefs)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	refs, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	tags := regexp.MustCompile(tagExpression).FindAll(refs, -1)
+
+	versions := make([]*version.Version, 0, len(tags))
+	min := version.Must(version.NewVersion(minimumVersion))
+	for _, tag := range tags {
+		v, err := version.NewVersion(string(tag[7:]))
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		for _, version := range versions {
-			fmt.Println(version.Original())
+		if !v.LessThan(min) {
+			versions = append(versions, v)
 		}
 	}
 
-	// TODO: listOnline()
+	sort.Sort(sort.Reverse(version.Collection(versions)))
+	return versions, nil
+}
 
-	return nil
+func list(versions []*version.Version, limit int) {
+	if l := len(versions); limit < 1 || l < limit {
+		limit = l
+	}
+
+	for _, version := range versions[:limit] {
+		fmt.Println(version.Original())
+	}
+}
+
+func List(online bool, limit int) (err error) {
+	var versions []*version.Version
+
+	if !online {
+		versions, err = getVersionsOffline()
+	} else {
+		versions, err = getVersionsOnline()
+	}
+	if err != nil {
+		return
+	}
+
+	list(versions, limit)
+	return
 }

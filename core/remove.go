@@ -1,18 +1,20 @@
 package core
 
 import (
+	"errors"
+	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
 
-// TODO: add a descriptive error message for non-existent versions
 func Remove(version string) error {
 	home := getHome()
 	link := filepath.Join(home, "bin")
 	target := filepath.Join(home, "versions", version)
 
 	linked, err := os.Readlink(link)
-	if err != nil {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 
@@ -20,6 +22,13 @@ func Remove(version string) error {
 		if err := os.Remove(link); err != nil {
 			return err
 		}
+	}
+
+	if _, err := os.Stat(target); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("version %q is not installed: %w", version, err)
+		}
+		return err
 	}
 
 	if err := os.RemoveAll(target); err != nil {

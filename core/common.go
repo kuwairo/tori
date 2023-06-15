@@ -1,11 +1,13 @@
 package core
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"os"
 	"path/filepath"
-
-	"github.com/google/uuid"
 )
+
+const tmpPostfixSize = 16
 
 func getHome() string {
 	home := os.Getenv("TORI_HOME")
@@ -16,10 +18,14 @@ func getHome() string {
 	return home
 }
 
-// TODO: replace UUID with a simpler alternative
 func symlink(version, path string) error {
+	b := make([]byte, tmpPostfixSize)
+	if _, err := rand.Read(b); err != nil {
+		return err
+	}
+
 	link := filepath.Join(path, "bin")
-	tmpLink := link + uuid.New().String()
+	tmpLink := link + hex.EncodeToString(b)
 
 	target := filepath.Join("versions", version, "go", "bin")
 	if err := os.Symlink(target, tmpLink); err != nil {

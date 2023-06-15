@@ -67,6 +67,8 @@ func main() {
 	}
 }
 
+// TODO: introduce handleError(error) error function for stderr output
+
 func handleInstall(cCtx *cli.Context) error {
 	version := cCtx.Args().First()
 	makeDefault := cCtx.Bool("use")

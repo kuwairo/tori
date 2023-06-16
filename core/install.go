@@ -36,9 +36,13 @@ func fetch(url, path string) error {
 	}
 	defer res.Body.Close()
 
-	// TODO: add a descriptive error message for 404
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", res.Status)
+	switch res.StatusCode {
+	case http.StatusOK:
+		break
+	case http.StatusNotFound:
+		return fmt.Errorf("requested version is not available at %q", url)
+	default:
+		return fmt.Errorf("unable to fetch version from %q: bad status: %s", url, res.Status)
 	}
 
 	if _, err := io.Copy(file, res.Body); err != nil {

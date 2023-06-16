@@ -67,46 +67,33 @@ func main() {
 	}
 }
 
-// TODO: introduce handleError(error) error function for stderr output
-
+// TODO: consider adding '-q' flag for the third argument
 func handleInstall(cCtx *cli.Context) error {
 	version := cCtx.Args().First()
 	makeDefault := cCtx.Bool("use")
-
-	// TODO: consider adding '-v' flag
-	if err := core.Install(version, makeDefault, true); err != nil {
-		fmt.Printf("An error occurred during execution: %v\n", err)
-	}
-
-	return nil
+	return handleError(core.Install(version, makeDefault, true))
 }
 
 func handleList(cCtx *cli.Context) error {
 	online := cCtx.Bool("available")
 	limit := cCtx.Int("limit")
-
-	if err := core.List(online, limit); err != nil {
-		fmt.Printf("An error occurred during execution: %v\n", err)
-	}
-
-	return nil
+	return handleError(core.List(online, limit))
 }
 
 func handleRemove(cCtx *cli.Context) error {
 	version := cCtx.Args().First()
-
-	if err := core.Remove(version); err != nil {
-		fmt.Printf("An error occurred during execution: %v\n", err)
-	}
-
-	return nil
+	return handleError(core.Remove(version))
 }
 
 func handleUse(cCtx *cli.Context) error {
 	version := cCtx.Args().First()
+	return handleError(core.Use(version))
+}
 
-	if err := core.Use(version); err != nil {
-		fmt.Printf("An error occurred during execution: %v\n", err)
+func handleError(err error) error {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "An error occurred during execution: %s\n", err)
+		os.Exit(1)
 	}
 
 	return nil

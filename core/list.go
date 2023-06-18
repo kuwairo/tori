@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/hashicorp/go-version"
+	gversion "github.com/hashicorp/go-version"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 	minimumVersion = "1.11" // preliminary support for modules
 )
 
-func getVersionsOffline() ([]*version.Version, error) {
+func getVersionsOffline() ([]*gversion.Version, error) {
 	home := getHome()
 	target := filepath.Join(home, "versions")
 
@@ -32,20 +32,20 @@ func getVersionsOffline() ([]*version.Version, error) {
 		return nil, err
 	}
 
-	versions := make([]*version.Version, len(entries))
+	versions := make([]*gversion.Version, len(entries))
 	for i, entry := range entries {
-		v, err := version.NewVersion(entry.Name())
+		v, err := gversion.NewVersion(entry.Name())
 		if err != nil {
 			return nil, err
 		}
 		versions[i] = v
 	}
 
-	sort.Sort(sort.Reverse(version.Collection(versions)))
+	sort.Sort(sort.Reverse(gversion.Collection(versions)))
 	return versions, nil
 }
 
-func getVersionsOnline() ([]*version.Version, error) {
+func getVersionsOnline() ([]*gversion.Version, error) {
 	res, err := http.Get(defaultRefs)
 	if err != nil {
 		return nil, err
@@ -59,10 +59,10 @@ func getVersionsOnline() ([]*version.Version, error) {
 
 	tags := regexp.MustCompile(tagExpression).FindAll(refs, -1)
 
-	versions := make([]*version.Version, 0, len(tags))
-	min := version.Must(version.NewVersion(minimumVersion))
+	versions := make([]*gversion.Version, 0, len(tags))
+	min := gversion.Must(gversion.NewVersion(minimumVersion))
 	for _, tag := range tags {
-		v, err := version.NewVersion(string(tag[7:]))
+		v, err := gversion.NewVersion(string(tag[7:]))
 		if err != nil {
 			return nil, err
 		}
@@ -72,11 +72,11 @@ func getVersionsOnline() ([]*version.Version, error) {
 		}
 	}
 
-	sort.Sort(sort.Reverse(version.Collection(versions)))
+	sort.Sort(sort.Reverse(gversion.Collection(versions)))
 	return versions, nil
 }
 
-func list(versions []*version.Version, limit int) {
+func list(versions []*gversion.Version, limit int) {
 	if l := len(versions); limit < 1 || l < limit {
 		limit = l
 	}
@@ -87,7 +87,7 @@ func list(versions []*version.Version, limit int) {
 }
 
 func List(online bool, limit int) (err error) {
-	var versions []*version.Version
+	var versions []*gversion.Version
 
 	if !online {
 		versions, err = getVersionsOffline()

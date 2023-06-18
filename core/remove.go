@@ -6,18 +6,18 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	gversion "github.com/hashicorp/go-version"
 )
 
 func Remove(version string) error {
+	if _, err := gversion.NewVersion(version); err != nil {
+		return fmt.Errorf("%q is not a valid version", version)
+	}
+
 	home := getHome()
 	link := filepath.Join(home, "bin")
-	versions := filepath.Join(home, "versions")
-
-	// TODO: fix possible out-of-home RemoveAll
-	target := filepath.Join(versions, version)
-	if target == versions {
-		return errors.New("no valid version is specified for the command")
-	}
+	target := filepath.Join(home, "versions", version)
 
 	linked, err := os.Readlink(link)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {

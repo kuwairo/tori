@@ -26,6 +26,11 @@ func main() {
 						Aliases: []string{"u"},
 						Usage:   "use the specified version as the default",
 					},
+					&cli.BoolFlag{
+						Name:    "quiet",
+						Aliases: []string{"q"},
+						Usage:   "disable the output of information during command execution",
+					},
 				},
 				Action: handleInstall,
 			},
@@ -67,11 +72,11 @@ func main() {
 	}
 }
 
-// TODO: consider adding '-q' flag for the third argument
 func handleInstall(cCtx *cli.Context) error {
 	version := cCtx.Args().First()
 	makeDefault := cCtx.Bool("use")
-	return handleError(core.Install(version, makeDefault, true))
+	verbose := !cCtx.Bool("quiet")
+	return handleError(core.Install(version, makeDefault, verbose))
 }
 
 func handleList(cCtx *cli.Context) error {

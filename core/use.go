@@ -6,9 +6,15 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	gversion "github.com/hashicorp/go-version"
 )
 
 func Use(version string) error {
+	if _, err := gversion.NewVersion(version); err != nil {
+		return fmt.Errorf("%q is not a valid version", version)
+	}
+
 	home := getHome()
 	target := filepath.Join(home, "versions", version, "go", "bin")
 
